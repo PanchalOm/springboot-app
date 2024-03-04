@@ -1,44 +1,90 @@
-
-node {
-  
-  def image
-  def mvnHome = tool 'Maven3'
-
-  
-     stage ('checkout') {
-        checkout([$class: 'GitSCM', branches: [[name: '*/master']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: '9ffd4ee4-3647-4a7d-a357-5e8746463282', url: 'https://bitbucket.org/ananthkannan/myawesomeangularapprepo/']]])       
-        }
+pipeline{
     
-    
-    stage ('Build') {
-            sh 'mvn -f MyAwesomeApp/pom.xml clean install'            
-        }
+    agent any
+    tools {
+        jdk 'JAVA_HOME'
+        maven 'MAVEN_HOME'
+    }
+    environment {
+        PATH = "$PATH:C:/maven/apache-maven-3.9.6-bin (3)/apache-maven-3.9.6/bin"
+    }
+    stages{
+  
+       stage('Code Compile'){
+            steps{
+                 bat 'mvn clean compile'
+                
+            }
+         }
+         
+         
+       stage('Unit test'){
+            steps{
+                 bat 'mvn test'
+                
+            }
+         }
+         
+        stage('Integration test'){
+            steps{
+                 bat 'mvn verify -DskipUnitTests'
+                
+            }
+         }
+         
+         stage('Maven build'){
+            steps{
+                 bat 'mvn clean install'
+                
+            }
+         }
         
-    stage ('archive') {
-            archiveArtifacts '**/*.jar'
-        }
-        
-    stage ('Docker Build') {
-         // Build and push image with Jenkins' docker-plugin
-        withDockerServer([uri: "tcp://localhost:4243"]) {
-
-            withDockerRegistry([credentialsId: "fa32f95a-2d3e-4c7b-8f34-11bcc0191d70", url: "https://index.docker.io/v1/"]) {
-            image = docker.build("ananthkannan/mywebapp", "MyAwesomeApp")
-            image.push()
+         stage('OWASP Dependency Check'){
+            steps{
+                 dependencyCheck additionalArguments: '', odcInstallation: 'DP'
+                
+            }
+         } 
+         
+       stage('Testing by sonar'){
+            steps{
+                
+                 bat ''' mvn sonar:sonar -Dsonar.url-http://localhost:9000/ -Dsonar.login-squ_abb67d36969df874cb80b76166032e71de78defa -Dsonar.projectname-Springboot-app \
+                     -Dsonar.java.binaries=. \
+                     -Dsonar.projectKey=Springboot-app '''
             
             }
+         }   
+         
+        stage('Code build'){
+            steps{
+                
+                 bat 'mvn clean package'
+            
+             }
+         } 
+    }
+    post{
+        
+          success{
+            
+             emailext attachLog: true, body: '''Your Springboot-app pipeline is successfully completed.<br>
+For check pipeline result click the blog.<br><br>
+
+Thanks.<br>
+-DevOps Team Ximple Solutions''', subject: 'Springboot-app pipeline result', to: 'ompanchalait@gmail.com'
+           
+            }
+        failure{
+            emailext attachLog: true, body: '''Your Springboot-app pipeline is unfortunately failed.<br>
+For check pipeline result click the blog.<br><br>
+
+Thanks.<br>
+-DevOps Team Ximple Solutions''', subject: 'Springboot-app pipeline result', to: 'ompanchalait@gmail.com'
+           
         }
     }
-    
-       stage('docker stop container') {
-            sh 'docker ps -f name=myContainer -q | xargs --no-run-if-empty docker container stop'
-            sh 'docker container ls -a -fname=myContainer -q | xargs -r docker container rm'
-
-       }
-
-    stage ('Docker run') {
-
-        image.run("-p 8085:8085 --rm --name myContainer")
-
-    }
 }
+
+
+
