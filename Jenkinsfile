@@ -56,20 +56,18 @@ pipeline{
             }
          }   
          
-        stage('Code build'){
+       stage('Code build'){
             steps{
-                
                  bat 'mvn clean package'
-            
              }
-             
+            post{
+                success{
+                    echo"Archiving Artifact"
+                    archiveArtifacts artifacts: '**/target/*.war'
+                }
+            }  
          } 
-        stage('Artifact'){
-            steps{
-                 archiveArtifacts artifacts: '**target/*.war'
-                
-            }
-         }
+        
         stage('Tomcat'){
             steps{
                deploy adapters: [tomcat9(credentialsId: 'e24b8dc2-46c5-4d59-bde4-e21a91a33bbd', path: '', url: 'http://localhost:8081/')], contextPath: 'SpringbootApp', war: '**/*.war'
@@ -77,7 +75,6 @@ pipeline{
                }
                 
             }
-         
     }
     post{
         
