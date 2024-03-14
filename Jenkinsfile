@@ -71,7 +71,7 @@ pipeline{
          } 
         stage('Tomcat'){
             steps{
-               deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://localhost:8081/')], contextPath: null, war: '**/*.war'
+               deploy adapters: [tomcat9(credentialsId: 'e24b8dc2-46c5-4d59-bde4-e21a91a33bbd', path: '', url: 'http://localhost:8081/')], contextPath: 'SpringbootApp', war: '**/*.war'
     
                }
                 
