@@ -64,7 +64,7 @@ pipeline{
              }
              
          } 
-        stage('Maven build'){
+        stage('Artifact'){
             steps{
                  archiveArtifacts artifacts: 'target/*.war'
                 
